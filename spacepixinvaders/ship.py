@@ -5,9 +5,11 @@ from random import shuffle, randrange, choice
 import sys
 
 class Ship(sprite.Sprite):
-	def __init__(self):
+	def __init__(self, player_ship):
 		sprite.Sprite.__init__(self)
-		self.image = IMAGES["ship"]
+		if not player_ship:
+			player_ship = IMAGES['ship']
+		self.image = player_ship
 		self.rect = self.image.get_rect(topleft=(375, 540))
 		self.speed = 5
 

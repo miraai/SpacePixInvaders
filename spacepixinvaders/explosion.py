@@ -5,7 +5,7 @@ from random import shuffle, randrange, choice
 import sys
 
 class Explosion(sprite.Sprite):
-	def __init__(self, xpos, ypos, row, ship, mystery, score):
+	def __init__(self, xpos, ypos, row, ship, mystery, score, player_ship):
 		sprite.Sprite.__init__(self)
 		self.isMystery = mystery
 		self.isShip = ship
@@ -13,7 +13,9 @@ class Explosion(sprite.Sprite):
 		if mystery:
 			self.text = Text(FONT, 20, str(score), WHITE, xpos+20, ypos+6)
 		elif ship:
-			self.image = IMAGES["ship"]
+			if not player_ship:
+				player_ship = IMAGES['ship']
+			self.image = player_ship
 			self.rect = self.image.get_rect(topleft=(xpos, ypos))
 		else:
 			self.row = row

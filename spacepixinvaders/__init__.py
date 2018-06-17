@@ -10,6 +10,7 @@ from spacepixinvaders.config import WHITE, GREEN, PURPLE, RED, BLUE, YELLOW, \
 		SCREEN, IMAGES, FONT
 from random import shuffle, randrange, choice
 
+from keyboard import is_pressed
 import sys
 
 class SpaceInvaders(object):
@@ -21,18 +22,19 @@ class SpaceInvaders(object):
 		self.background = image.load('images/background.jpg').convert()
 		self.startGame = False
 		self.mainScreen = True
+		self.shipScreen = False
 		self.gameOver = False
 		self.enemyposition = 65
 
-	def reset(self, score, lives):
-		self.player = Ship()
+	def reset(self, score, lives, player_ship=None):
+		self.player = Ship(player_ship)
 		self.playerGroup = sprite.Group(self.player)
 		self.explosionsGroup = sprite.Group()
 		self.bullets = sprite.Group()
 		self.mysteryShip = Mystery()
 		self.mysteryGroup = sprite.Group(self.mysteryShip)
 		self.enemyBullets = sprite.Group()
-		self.reset_lives()
+		self.reset_lives(player_ship)
 		self.make_enemies()
 		self.allBlockers = sprite.Group(self.make_blockers(0), self.make_blockers(1), self.make_blockers(2), self.make_blockers(3))
 		self.keys = key.get_pressed()
@@ -60,10 +62,10 @@ class SpaceInvaders(object):
 				blockerGroup.add(blocker)
 			return blockerGroup
 
-	def reset_lives(self):
-		self.life1 = Life(715, 3)
-		self.life2 = Life(742, 3)
-		self.life3 = Life(769, 3)
+	def reset_lives(self, player_ship=None):
+		self.life1 = Life(715, 3, player_ship)
+		self.life2 = Life(742, 3, player_ship)
+		self.life3 = Life(769, 3, player_ship)
 		self.livesGroup = sprite.Group(self.life1, self.life2, self.life3)
 		
 	def create_audio(self):
@@ -195,9 +197,53 @@ class SpaceInvaders(object):
 				sys.exit()
 			
 			if e.type == KEYUP:
-				self.startGame = True
+				self.shipScreen = True
+				self.startGame = False
 				self.mainScreen = False
-	
+
+	def choose_ship(self):
+		self.ship1 = IMAGES["enemy1_1"]
+		self.ship1 = transform.scale(self.ship1 , (40, 40))
+		self.ship2 = IMAGES["enemy1_2"]
+		self.ship2 = transform.scale(self.ship2 , (40, 40))
+		self.ship3 = IMAGES["enemy2_1"]
+		self.ship3 = transform.scale(self.ship3 , (40, 40))
+		self.ship4 = IMAGES["enemy2_2"]
+		self.ship4 = transform.scale(self.ship4 , (80, 40))
+		self.screen.blit(self.ship1, (318, 270))
+		self.screen.blit(self.ship2, (318, 320))
+		self.screen.blit(self.ship3, (318, 370))
+		self.screen.blit(self.ship4, (299, 420))
+
+		for e in event.get():
+			if e.type == QUIT:
+				sys.exit()
+			
+			# if e.type == KEYUP:
+			# 	self.startGame = True
+			# 	self.shipScreen = False
+			# 	self.mainScreen = False
+
+			if is_pressed('q'):
+				self.startGame = True
+				self.shipScreen = False
+				self.mainScreen = False
+				player_ship = self.ship1
+			elif is_pressed('w'):
+				self.startGame = True
+				self.shipScreen = False
+				self.mainScreen = False
+				player_ship = self.ship2
+			elif is_pressed('e'):
+				self.startGame = True
+				self.shipScreen = False
+				self.mainScreen = False
+				player_ship = self.ship3
+			else:
+				player_ship = self.ship1
+
+			return player_ship
+
 	def update_enemy_speed(self):
 		if len(self.enemies) <= 10:
 			for enemy in self.enemies:
@@ -207,7 +253,7 @@ class SpaceInvaders(object):
 			for enemy in self.enemies:
 				enemy.moveTime = 200
 				
-	def check_collisions(self):
+	def check_collisions(self, player_ship=None):
 		collidedict = sprite.groupcollide(self.bullets, self.enemyBullets, True, False)
 		if collidedict:
 			for value in collidedict.values():
@@ -223,7 +269,7 @@ class SpaceInvaders(object):
 					self.killedRow = currentSprite.row
 					self.killedColumn = currentSprite.column
 					score = self.calculate_score(currentSprite.row)
-					explosion = Explosion(currentSprite.rect.x, currentSprite.rect.y, currentSprite.row, False, False, score)
+					explosion = Explosion(currentSprite.rect.x, currentSprite.rect.y, currentSprite.row, False, False, score, player_ship)
 					self.explosionsGroup.add(explosion)
 					self.allSprites.remove(currentSprite)
 					self.enemies.remove(currentSprite)
@@ -237,7 +283,7 @@ class SpaceInvaders(object):
 					currentSprite.mysteryEntered.stop()
 					self.sounds["mysterykilled"].play()
 					score = self.calculate_score(currentSprite.row)
-					explosion = Explosion(currentSprite.rect.x, currentSprite.rect.y, currentSprite.row, False, True, score)
+					explosion = Explosion(currentSprite.rect.x, currentSprite.rect.y, currentSprite.row, False, True, score, player_ship)
 					self.explosionsGroup.add(explosion)
 					self.allSprites.remove(currentSprite)
 					self.mysteryGroup.remove(currentSprite)
@@ -266,7 +312,7 @@ class SpaceInvaders(object):
 						self.gameOver = True
 						self.startGame = False
 					self.sounds["shipexplosion"].play()
-					explosion = Explosion(playerShip.rect.x, playerShip.rect.y, 0, True, False, 0)
+					explosion = Explosion(playerShip.rect.x, playerShip.rect.y, 0, True, False, 0, player_ship)
 					self.explosionsGroup.add(explosion)
 					self.allSprites.remove(playerShip)
 					self.playerGroup.remove(playerShip)
@@ -282,9 +328,9 @@ class SpaceInvaders(object):
 		sprite.groupcollide(self.enemyBullets, self.allBlockers, True, True)
 		sprite.groupcollide(self.enemies, self.allBlockers, False, True)
 
-	def create_new_ship(self, createShip, currentTime):
+	def create_new_ship(self, createShip, currentTime, player_ship):
 		if createShip and (currentTime - self.shipTimer > 900):
-			self.player = Ship()
+			self.player = Ship(player_ship)
 			self.allSprites.add(self.player)
 			self.playerGroup.add(self.player)
 			self.makeNewShip = False
@@ -319,6 +365,16 @@ class SpaceInvaders(object):
 				self.enemy3Text.draw(self.screen)
 				self.enemy4Text.draw(self.screen)
 				self.create_main_menu()
+			
+			elif self.shipScreen:
+				self.screen.blit(self.background, (0,0))
+				self.enemy1Text.draw(self.screen)
+				self.enemy2Text.draw(self.screen)
+				self.enemy3Text.draw(self.screen)
+				self.enemy4Text.draw(self.screen)
+				player_ship = self.choose_ship()
+				
+				self.reset(0, 3, player_ship)
 
 			elif self.startGame:
 				if len(self.enemies) == 0:
@@ -335,7 +391,7 @@ class SpaceInvaders(object):
 						self.check_input()
 					
 					if currentTime - self.gameTimer > 3000:
-						self.reset(self.score, self.lives)
+						self.reset(self.score, self.lives, player_ship)
 						self.enemyposition += 35
 						self.make_enemies()
 						self.gameTimer += 3000
@@ -351,8 +407,8 @@ class SpaceInvaders(object):
 					self.check_input()
 					self.allSprites.update(self.keys, currentTime, self.killedRow, self.killedColumn, self.killedArray)
 					self.explosionsGroup.update(self.keys, currentTime)
-					self.check_collisions()
-					self.create_new_ship(self.makeNewShip, currentTime)
+					self.check_collisions(player_ship)
+					self.create_new_ship(self.makeNewShip, currentTime, player_ship)
 					self.update_enemy_speed()
 
 					if len(self.enemies) > 0:
