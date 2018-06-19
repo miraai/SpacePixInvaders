@@ -1,6 +1,7 @@
 from pygame import *
-from spacepixinvaders.config import IMAGES, SCREEN
+from spacepixinvaders.config import IMAGES, SCREEN, FONT, WHITE, GREEN, YELLOW, BLUE, PURPLE, RED
 from random import shuffle, randrange, choice
+from spacepixinvaders.utils import Text
 
 import sys
 

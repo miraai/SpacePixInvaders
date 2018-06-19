@@ -1,4 +1,3 @@
-from pygame import *
 from spacepixinvaders.blocker import Blocker
 from spacepixinvaders.bullet import Bullet
 from spacepixinvaders.enemy import Enemy
@@ -6,12 +5,34 @@ from spacepixinvaders.explosion import Explosion
 from spacepixinvaders.life import Life
 from spacepixinvaders.mystery import Mystery
 from spacepixinvaders.ship import Ship
+from spacepixinvaders.models import HighScore, create_database
+from spacepixinvaders.database_gateway import DatabaseGateway
+from spacepixinvaders.utils import Text
 from spacepixinvaders.config import WHITE, GREEN, PURPLE, RED, BLUE, YELLOW, \
-		SCREEN, IMAGES, FONT
-from random import shuffle, randrange, choice
+		SCREEN, IMAGES, FONT, DB_PATH
 
+from pygame import *
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+from random import shuffle, randrange, choice
 from keyboard import is_pressed
 import sys
+import os
+
+engine = create_engine(DB_PATH)
+connection = engine.connect()
+Session = sessionmaker(bind=engine)
+session = Session()
+
+create_database(Session, engine)
+
+db = DatabaseGateway(session)
+
+#db.insert_player('ajla', 'ship1')
+#db.update_score('ajla', 50)
+# print(db.show_highscores())
 
 class SpaceInvaders(object):
 	def __init__(self):
@@ -96,12 +117,18 @@ class SpaceInvaders(object):
 	def create_text(self):
 		self.titleText = Text(FONT, 50, "Space Pix Invaders", WHITE, 114, 155)
 		self.titleText2 = Text(FONT, 25, "Press any key to continue", WHITE, 201, 225)
+		self.pickText = Text(FONT, 25, "Pick your Battleship!", WHITE, 211, 155)
+		
 		self.gameOverText = Text(FONT, 50, "Game Over", WHITE, 250, 270)
 		self.nextRoundText = Text(FONT, 50, "Next Round", WHITE, 240, 270)
-		self.enemy1Text = Text(FONT, 25, "   =   10 pts", GREEN, 368, 270)
+		self.enemy1Text = Text(FONT, 25, "   =  10 pts", GREEN, 368, 270)
 		self.enemy2Text = Text(FONT, 25, "   =  20 pts", BLUE, 368, 320)
 		self.enemy3Text = Text(FONT, 25, "   =  30 pts", PURPLE, 368, 370)
 		self.enemy4Text = Text(FONT, 25, "   =  ?????", RED, 368, 420)
+		self.ship1Text = Text(FONT, 25, "   =  q", GREEN, 368, 270)
+		self.ship2Text = Text(FONT, 25, "   =  w", BLUE, 368, 320)
+		self.ship3Text = Text(FONT, 25, "   =  e", PURPLE, 368, 370)
+		self.ship4Text = Text(FONT, 25, "   =  r", RED, 368, 420)
 		self.scoreText = Text(FONT, 20, "Score", WHITE, 5, 5)
 		self.livesText = Text(FONT, 20, "Lives ", WHITE, 640, 5)
 		
@@ -202,27 +229,22 @@ class SpaceInvaders(object):
 				self.mainScreen = False
 
 	def choose_ship(self):
-		self.ship1 = IMAGES["enemy1_1"]
+		self.ship1 = IMAGES["ship"]
 		self.ship1 = transform.scale(self.ship1 , (40, 40))
-		self.ship2 = IMAGES["enemy1_2"]
+		self.ship2 = IMAGES["ship1"]
 		self.ship2 = transform.scale(self.ship2 , (40, 40))
-		self.ship3 = IMAGES["enemy2_1"]
+		self.ship3 = IMAGES["ship2"]
 		self.ship3 = transform.scale(self.ship3 , (40, 40))
-		self.ship4 = IMAGES["enemy2_2"]
-		self.ship4 = transform.scale(self.ship4 , (80, 40))
+		self.ship4 = IMAGES["ship3"]
+		self.ship4 = transform.scale(self.ship4 , (40, 40))
 		self.screen.blit(self.ship1, (318, 270))
 		self.screen.blit(self.ship2, (318, 320))
 		self.screen.blit(self.ship3, (318, 370))
-		self.screen.blit(self.ship4, (299, 420))
+		self.screen.blit(self.ship4, (318, 420))
 
 		for e in event.get():
 			if e.type == QUIT:
 				sys.exit()
-			
-			# if e.type == KEYUP:
-			# 	self.startGame = True
-			# 	self.shipScreen = False
-			# 	self.mainScreen = False
 
 			if is_pressed('q'):
 				self.startGame = True
@@ -239,6 +261,11 @@ class SpaceInvaders(object):
 				self.shipScreen = False
 				self.mainScreen = False
 				player_ship = self.ship3
+			elif is_pressed('r'):
+				self.startGame = True
+				self.shipScreen = False
+				self.mainScreen = False
+				player_ship = self.ship4
 			else:
 				player_ship = self.ship1
 
@@ -368,10 +395,11 @@ class SpaceInvaders(object):
 			
 			elif self.shipScreen:
 				self.screen.blit(self.background, (0,0))
-				self.enemy1Text.draw(self.screen)
-				self.enemy2Text.draw(self.screen)
-				self.enemy3Text.draw(self.screen)
-				self.enemy4Text.draw(self.screen)
+				self.pickText.draw(self.screen)
+				self.ship1Text.draw(self.screen)
+				self.ship2Text.draw(self.screen)
+				self.ship3Text.draw(self.screen)
+				self.ship4Text.draw(self.screen)
 				player_ship = self.choose_ship()
 				
 				self.reset(0, 3, player_ship)
@@ -415,17 +443,9 @@ class SpaceInvaders(object):
 						self.make_enemies_shoot()
 	
 			elif self.gameOver:
+				db.insert_player('ajla1', self.score, player_ship)
 				currentTime = time.get_ticks()
 				self.create_game_over(currentTime)
 
 			display.update()
 			self.clock.tick(60)
-
-class Text(object):
-	def __init__(self, textFont, size, message, color, xpos, ypos):
-		self.font = font.Font(textFont, size)
-		self.surface = self.font.render(message, True, color)
-		self.rect = self.surface.get_rect(topleft=(xpos, ypos))
-
-	def draw(self, surface):
-		surface.blit(self.surface, self.rect)

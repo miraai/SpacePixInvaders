@@ -1,6 +1,9 @@
 from pygame import *
-import sys
+
 from random import shuffle, randrange, choice
+import sys
+
+DB_PATH = 'sqlite:///spacepixinvaders/space.db'
 
 # Colours
 WHITE = (255, 255, 255)
@@ -14,7 +17,7 @@ SCREEN = display.set_mode((800,600))
 
 FONT = "fonts/space_invaders.ttf"
 IMG_NAMES = ["ship", "ship", "mystery", "enemy1_1", "enemy1_2", "enemy2_1", "enemy2_2",
-				"enemy3_1", "enemy3_2", "explosionblue", "explosiongreen", "explosionpurple", "laser", "enemylaser"]
+				"enemy3_1", "enemy3_2", "explosionblue", "explosiongreen", "explosionpurple", "laser", "enemylaser", 'ship1', 'ship2', 'ship3']
 IMAGES = {name: image.load("images/{}.png".format(name)).convert_alpha()
 				for name in IMG_NAMES}
 
