@@ -7,14 +7,14 @@ class DatabaseGateway(object):
     def __init__(self, session):
         self.session = session
 
-    def insert_player(self, username, player_ship):
+    def insert_player(self, username):
         try:
             # Try to find a player
             player = self.session.query(HighScore).filter_by(username=username).first()
 
             # If there is none, insert a new player into the database
             if not player:
-                player = HighScore(username=username, score=0, ship=player_ship)
+                player = HighScore(username=username, score=0)
                 self.session.add(player)
                 self.session.commit()
         except (IntegrityError, OperationalError) as e:
