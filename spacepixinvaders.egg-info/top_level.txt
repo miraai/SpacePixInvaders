@@ -1,4 +1,0 @@
-fonts
-images
-sounds
-spacepixinvaders

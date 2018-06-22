@@ -268,7 +268,7 @@ class SpaceInvaders(object):
 				player_ship = self.ship4
 			else:
 				player_ship = self.ship1
-
+			db.insert_player('Ajla')
 			return player_ship
 
 	def update_enemy_speed(self):
@@ -444,8 +444,8 @@ class SpaceInvaders(object):
 						self.make_enemies_shoot()
 	
 			elif self.gameOver:
-				db.insert_player('ajlaaa', player_ship)
 				currentTime = time.get_ticks()
+				db.update_score('Ajla', self.score)
 				self.create_game_over(currentTime)
 
 			display.update()

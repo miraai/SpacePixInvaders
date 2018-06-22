@@ -9,22 +9,19 @@ class HighScore(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String, nullable=False)
     score = Column(Integer, default=0, nullable=True)
-    ship = Column(String, nullable=False)
 
-    def __init__(self, username, score, ship):
+    def __init__(self, username, score):
         self.username = username
         self.score = score
-        self.ship = ship
 
     def __str__(self):
-        return 'id: %s | username: %s | score: %s | ship: %s' %(self.id, self.username, self.score, self.ship)
+        return 'id: %s | username: %s | score: %s' %(self.id, self.username, self.score)
 
     def as_dict(self):
         return {
             'id': self.id,
             'username': self.username,
-            'score': self.score,
-            'ship': self.ship
+            'score': self.score
         }
 
 def create_database(session, engine):
